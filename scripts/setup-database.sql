@@ -1,16 +1,27 @@
--- Create database
-CREATE DATABASE IF NOT EXISTS movie_db;
-USE movie_db;
-
 -- Create movies table
 CREATE TABLE IF NOT EXISTS movies (
-  id INT AUTO_INCREMENT PRIMARY KEY,
+  id SERIAL PRIMARY KEY,
   title VARCHAR(255) NOT NULL,
-  year INT NOT NULL,
-  status ENUM('watched', 'unwatched') NOT NULL DEFAULT 'unwatched',
+  year INTEGER NOT NULL,
+  status VARCHAR(20) CHECK (status IN ('watched', 'unwatched')) NOT NULL DEFAULT 'unwatched',
   created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+-- Create function to update updated_at timestamp
+CREATE OR REPLACE FUNCTION update_updated_at_column()
+RETURNS TRIGGER AS $$
+BEGIN
+    NEW.updated_at = CURRENT_TIMESTAMP;
+    RETURN NEW;
+END;
+$$ language 'plpgsql';
+
+-- Create trigger to automatically update updated_at
+CREATE TRIGGER update_movies_updated_at 
+    BEFORE UPDATE ON movies 
+    FOR EACH ROW 
+    EXECUTE FUNCTION update_updated_at_column();
 
 -- Insert sample data
 INSERT INTO movies (title, year, status) VALUES

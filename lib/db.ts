@@ -1,29 +1,19 @@
-import mysql from "mysql2/promise"
+import { neon } from '@neondatabase/serverless'
 
-const dbConfig = {
-  host: process.env.DB_HOST || "localhost",
-  user: process.env.DB_USER || "root",
-  password: process.env.DB_PASSWORD || "",
-  database: process.env.DB_NAME || "movie_db",
-  port: Number.parseInt(process.env.DB_PORT || "3306"),
-}
+const sql = neon(process.env.DATABASE_URL!)
 
-export async function getConnection() {
+export async function query(sqlQuery: string, params?: any[]) {
   try {
-    const connection = await mysql.createConnection(dbConfig)
-    return connection
+    const results = await sql(sqlQuery, params)
+    return results
   } catch (error) {
-    console.error("Database connection failed:", error)
+    console.error("Database query failed:", error)
     throw error
   }
 }
 
-export async function query(sql: string, params?: any[]) {
-  const connection = await getConnection()
-  try {
-    const [results] = await connection.execute(sql, params)
-    return results
-  } finally {
-    await connection.end()
-  }
+// For compatibility with existing code
+export async function getConnection() {
+  // Neon handles connections automatically, so we just return the sql function
+  return sql
 }
